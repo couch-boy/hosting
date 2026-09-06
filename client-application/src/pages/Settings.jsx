@@ -2,6 +2,7 @@ import { Container, Row, Col, Button, Form, Modal } from "react-bootstrap";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Settings.css";
+import { apiFetch } from "../utils/api";
 
 function Settings() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ function Settings() {
   useEffect(() => {
     const fetchKeybinds = async () => {
       try {
-        const res = await fetch("/user/keybinds");
+        const res = await apiFetch("/user/keybinds");
 
         const result = await res.json();
 
@@ -99,7 +100,7 @@ function Settings() {
     }
 
     try {
-      const res = await fetch("/user/password", {
+      const res = await apiFetch("/user/password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +172,7 @@ function Settings() {
 
   const saveKeybinds = async () => {
     try {
-      const res = await fetch("/user/keybinds", {
+      const res = await apiFetch("/user/keybinds", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -205,7 +206,7 @@ function Settings() {
 
 
     try {
-      const res = await fetch("/user/settings", {
+      const res = await apiFetch("/user/settings", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -227,7 +228,7 @@ function Settings() {
 
   const restoreDefaultSettings = async () => {
     try {
-      const res = await fetch("/user/settings", {
+      const res = await apiFetch("/user/settings", {
         method: "DELETE",
       });
 
@@ -268,7 +269,7 @@ function Settings() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/user/settings");
+        const res = await apiFetch("/user/settings");
 
         const result = await res.json();
 
