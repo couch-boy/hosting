@@ -19,6 +19,10 @@
   },
   "servers": [
     {
+      "url": "https://ifb398-auwj.onrender.com/",
+      "description": "Render Hosted API"
+    },
+    {
       "url": "http://localhost:3000/",
       "description": "Local Development Server"
     }
