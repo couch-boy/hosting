@@ -33,11 +33,13 @@ router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
 
     // Hash password and insert into database
     const hashedPassword = await bcrypt.hash(password, 10);
-    await req.db('users').insert({
-      username,
-      password: hashedPassword,
-      role
-    });
+    await req.db('users')
+      .insert({
+        username,
+        password: hashedPassword,
+        role
+      })
+      .returning('username');
 
     res.status(201).json({
       error: false,
@@ -514,16 +516,16 @@ router.get('/admin-test', verifyToken, requireRole('admin'), (req, res) => {
 
 // ============================== POST https://localhost:3000/user/logout ==============================
 router.post('/logout', (req, res) => {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-    });
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  });
 
-    res.status(200).json({
-        error: false,
-        message: 'Logged out successfully'
-    });
+  res.status(200).json({
+    error: false,
+    message: 'Logged out successfully'
+  });
 });
 
 export default router;

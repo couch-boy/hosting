@@ -76,7 +76,7 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
       });
     */
 
-    // 1. Explicitly request the returned id column
+    // Explicitly request the returned id column
     const result = await req.db('games')
       .insert({
         game_name,
@@ -86,7 +86,7 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
       })
       .returning('game_id');
 
-    // 2. Extract the ID safely whether result is [1], [{ id: 1 }], or an integer
+    // Extract the ID safely whether result is [1], [{ id: 1 }], or an integer
     let insertedId;
     if (Array.isArray(result) && result.length > 0) {
       insertedId = typeof result[0] === 'object' ? result[0].game_id : result[0];

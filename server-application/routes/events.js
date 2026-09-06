@@ -20,15 +20,15 @@ const VALID_EVENT_CODES = [
 
 const VALID_ZONES = ["A", "B", "M", "C", "D"];
 
-function validateEventInput({game_id, event_code, zone_id, team_id, game_clock, game_half}) {
-    if (!Number.isInteger(game_id) || game_id <= 0) return "A valid game ID is required.";
-    if (!VALID_EVENT_CODES.includes(event_code)) return "Invalid event code.";
-    if (!VALID_ZONES.includes(zone_id)) return "Invalid zone.";
-    if (![1, 2].includes(team_id)) return "Invalid team ID.";
-    if (typeof game_clock !== "number" || game_clock < 0) return "A valid game clock is required.";
-    if (![1, 2].includes(game_half)) return "Invalid game half.";
+function validateEventInput({ game_id, event_code, zone_id, team_id, game_clock, game_half }) {
+  if (!Number.isInteger(game_id) || game_id <= 0) return "A valid game ID is required.";
+  if (!VALID_EVENT_CODES.includes(event_code)) return "Invalid event code.";
+  if (!VALID_ZONES.includes(zone_id)) return "Invalid zone.";
+  if (![1, 2].includes(team_id)) return "Invalid team ID.";
+  if (typeof game_clock !== "number" || game_clock < 0) return "A valid game clock is required.";
+  if (![1, 2].includes(game_half)) return "Invalid game half.";
 
-    return null;
+  return null;
 }
 
 // ============================== POST https://localhost:3000/events ==============================
@@ -37,15 +37,16 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
   try {
     const { game_id, event_code, zone_id, team_id, game_clock, game_half } = req.body;
 
-    const validationError = validateEventInput({game_id, event_code, zone_id, team_id, game_clock, game_half});
+    const validationError = validateEventInput({ game_id, event_code, zone_id, team_id, game_clock, game_half });
 
     if (validationError) {
-        return res.status(400).json({
-            error: true,
-            message: validationError,
-        });
+      return res.status(400).json({
+        error: true,
+        message: validationError,
+      });
     }
 
+    /*
     const [insertedId] = await req.db('events')
       .insert({
         game_id,
@@ -55,6 +56,27 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
         game_clock,
         game_half
       });
+    */
+
+    // 1. Explicitly request primary key 'event_id'
+    const result = await req.db('events')
+      .insert({
+        game_id,
+        event_code,
+        zone_id,
+        team_id,
+        game_clock,
+        game_half
+      })
+      .returning('event_id');
+
+    // 2. Extract event_id safely
+    let insertedId;
+    if (Array.isArray(result) && result.length > 0) {
+      insertedId = typeof result[0] === 'object' ? (result[0].event_id ?? result[0].id) : result[0];
+    } else {
+      insertedId = result;
+    }
 
     // Success response - 201 Created
     res.status(201).json({ error: false, message: "Event logged successfully", event_id: insertedId });
@@ -128,13 +150,13 @@ router.put('/:id', verifyToken, requireRole('admin', 'editor'), async (req, res)
 
     const { game_id, event_code, zone_id, team_id, game_clock, game_half } = req.body;
 
-    const validationError = validateEventInput({game_id, event_code, zone_id, team_id, game_clock, game_half});
+    const validationError = validateEventInput({ game_id, event_code, zone_id, team_id, game_clock, game_half });
 
     if (validationError) {
-        return res.status(400).json({
-            error: true,
-            message: validationError,
-        });
+      return res.status(400).json({
+        error: true,
+        message: validationError,
+      });
     }
 
     const updated = await req.db('events')
