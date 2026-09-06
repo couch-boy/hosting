@@ -84,7 +84,7 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
         start_time,
         game_status
       })
-      .returning('id');
+      .returning('game_id');
 
     // 2. Extract the ID safely whether result is [1], [{ id: 1 }], or an integer
     let insertedId;
