@@ -1,6 +1,6 @@
+import fs from 'fs';
+import path from 'path';
 import knex from 'knex';
-import https from 'node:https';
-import fs from 'node:fs';
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
@@ -9,14 +9,25 @@ import { createApp } from './app.js';
 
 const port = process.env.PORT || 3000;
 
-// Initialize Knex
-const db = knex(knexConfig);
+// Ensure persistent directory exists if DB_PATH is set
+if (process.env.DB_PATH) {
+    const dir = path.dirname(process.env.DB_PATH);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+}
+
+// Determine current environment ('development' by default when running locally)
+const environment = process.env.NODE_ENV || 'development';
+const config = knexConfig[environment] || knexConfig.development;
+const db = knex(config);
+
 const app = createApp(db);
 
-async function initialieDatabase() {
+async function initialiseDatabase() {
     try {
         // Run migrations if they haven't been run yet
-        await db.migrate.latest()
+        await db.migrate.latest();
 
         console.log('Database migrations completed successfully.');
 
@@ -26,12 +37,15 @@ async function initialieDatabase() {
         if (users.length === 0) {
             console.log('No users found. Creating default account...');
 
-            const hashedPassword = await bcrypt.hash('admin', NUM_SALTS);
-
-            await db('users').insert({
+            const hashedPassword = await bcrypt.hash('admin', 10);
+            // Add default user with hashed password
+            await db('users').insert([{
                 username: 'admin',
-                password: hashedPassword
-            });
+                password: hashedPassword,
+                role: 'admin',
+                keybinds: null,
+                settings: null
+            }]);
 
             console.log('Default user created...');
             console.log('Username: "admin"');
@@ -45,27 +59,15 @@ async function initialieDatabase() {
 
 async function startServer() {
     try {
-        await initialieDatabase();
+        await initialiseDatabase();
 
-        // HTTPS Credentials
-        const credentials = {
-            key: fs.readFileSync('./certs/selfsigned.key'),
-            cert: fs.readFileSync('./certs/selfsigned.crt')
-        }
-
-        // Start HTTPS server
-        https.createServer(credentials, app).listen(port, () => {
-            console.log(`Server listening on https://localhost:${port}`);
+        const host = '0.0.0.0'; // Render requires listening on 0.0.0.0
+        app.listen(port, host, () => {
+            console.log(`Server listening on port ${port}`);
         });
 
     } catch (error) {
-        if (error.code == 'ENOENT') {
-            console.error("HTTPS Initialization Error: Could not read certificate keys.");
-            console.error("Please press \"CTRL + C\" and run \"npm run cert\" to generate local credentials.");
-        } else {
-            console.error('Server startup failed:', error);
-        }
-
+        console.error('Server startup failed:', error);
         process.exit(1);
     }
 }

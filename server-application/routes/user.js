@@ -510,8 +510,6 @@ router.get('/admin-test', verifyToken, requireRole('admin'), (req, res) => {
   });
 });
 
-
-
 // ============================== POST https://localhost:3000/user/logout ==============================
 router.post('/logout', (req, res) => {
     res.clearCookie('token', {

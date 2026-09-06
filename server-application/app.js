@@ -21,7 +21,11 @@ export function createApp(db) {
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use(cors());
+
+  app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true
+  }));
 
   if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
@@ -34,22 +38,22 @@ export function createApp(db) {
   });
 
   // Mount routers
-    // https://localhost:3000/games
-    // ./routes/games.js
-    app.use('/games', gamesRouter);
+  // https://localhost:3000/games
+  // ./routes/games.js
+  app.use('/games', gamesRouter);
 
-    // https://localhost:3000/events
-    // ./routes/events.js
-    app.use('/events', eventsRouter);
+  // https://localhost:3000/events
+  // ./routes/events.js
+  app.use('/events', eventsRouter);
 
-    // https://localhost:3000/user
-    // ./routes/user.js
-    app.use('/user', userRouter);
+  // https://localhost:3000/user
+  // ./routes/user.js
+  app.use('/user', userRouter);
 
-    // Serve documentation at server root
-    app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocument, swaggerOptions));
+  // Serve documentation at server root
+  app.use('/', swaggerUI.serve, swaggerUI.setup(swaggerDocument, swaggerOptions));
 
-    return app;
+  return app;
 }
 
 
