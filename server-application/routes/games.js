@@ -10,10 +10,10 @@ const VALID_GAME_STATUSES = [
   "cancelled",
 ];
 
-function validateGameInput({game_name, vs_team, start_time, game_status}) {
+function validateGameInput({ game_name, vs_team, start_time, game_status }) {
   if (typeof game_name !== "string" || game_name.trim() === "") return "Game name is required.";
   if (typeof vs_team !== "string" || vs_team.trim() === "") return "Opponent is required.";
-  if (!start_time ||Number.isNaN(Date.parse(start_time))) return "A valid start time is required.";
+  if (!start_time || Number.isNaN(Date.parse(start_time))) return "A valid start time is required.";
   if (!VALID_GAME_STATUSES.includes(game_status)) return "Invalid game status.";
   return null;
 }
@@ -31,7 +31,7 @@ const VALID_SORT_ORDERS = [
   "desc",
 ];
 
-function validateGameQuery({status, start, end, sortBy, sortOrder, page, limit}) {
+function validateGameQuery({ status, start, end, sortBy, sortOrder, page, limit }) {
   if (status && !VALID_GAME_STATUSES.includes(status)) return "Invalid game status.";
   if (start && Number.isNaN(Date.parse(start))) return "Invalid start date.";
   if (end && Number.isNaN(Date.parse(end))) return "Invalid end date.";
@@ -66,6 +66,7 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
       });
     }
 
+    /*
     const [insertedId] = await req.db('games')
       .insert({
         game_name,
@@ -73,6 +74,25 @@ router.post('/', verifyToken, requireRole('admin', 'editor'), async (req, res) =
         start_time,
         game_status
       });
+    */
+
+    // 1. Explicitly request the returned id column
+    const result = await req.db('games')
+      .insert({
+        game_name,
+        vs_team,
+        start_time,
+        game_status
+      })
+      .returning('id');
+
+    // 2. Extract the ID safely whether result is [1], [{ id: 1 }], or an integer
+    let insertedId;
+    if (Array.isArray(result) && result.length > 0) {
+      insertedId = typeof result[0] === 'object' ? result[0].id : result[0];
+    } else {
+      insertedId = result;
+    }
 
     // Success response - 201 Created
     res.status(201).json({ error: false, message: "Game created successfully", game_id: insertedId });
@@ -98,7 +118,7 @@ router.get('/', verifyToken, async (req, res) => {
       limit = '20'
     } = req.query;
 
-    const validationError = validateGameQuery({ status, start, end, sortBy, sortOrder, page, limit});
+    const validationError = validateGameQuery({ status, start, end, sortBy, sortOrder, page, limit });
 
     if (validationError) {
       return res.status(400).json({
